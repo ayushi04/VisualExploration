@@ -1,0 +1,15 @@
+1)
+line 54 dimension.html:
+<!--<div class="row" align="right" style="text-align:right display:inline;" >
+    <form action={{ url_for('heidicontrollers.pattern_dashboard') }}>
+    <input type="hidden" name="datasetName" value="{{datasetPath}}"></input>
+    <button type="submit" align="right" class="btn" >Pattern Dashboard</button>
+    </form>
+    <form action={{ url_for('heidicontrollers.analyticsReport') }}>
+    <input type="hidden" name="datasetName" value="{{datasetPath}}"></input>
+    <button type="submit" align="right" class="btn" >Analytics Report</button>
+    </form>
+    </div>-->
+    <!--<div class="row text-right" style="text-align:right display:inline;" >
+      <button id="dashboard">Subspace Dashboard </button>
+    </div>-->
