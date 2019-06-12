@@ -13,6 +13,7 @@
       <script src="{{ url_for('static',filename='js/dist/leaflet.js') }}" ></script>
       <script src="{{ url_for('static',filename='js/dist/d3.v3.js') }}"></script>
       <script src="{{ url_for('static',filename='js/dist/plotly-latest.min.js') }}"></script>
+      <script src="{{ url_for('static',filename='js/dimension_new.js') }}"></script>
       <script src="{{ url_for('static',filename='js/vis3.js') }}"></script>
       <script src="{{ url_for('static',filename='js/vis4.js') }}"></script>
       <script src="{{ url_for('static',filename='js/giant-wheel.js') }}"></script>
@@ -53,6 +54,7 @@
       <div class="container text-center">
         <form action = "{{ url_for('heidi_controllers.heidi') }}" method="POST">
          <div class="row">
+            <!--
             <div class="col-sm-2 well">
                <div class="well">
                   <p><a href="#">My Profile</a>
@@ -76,6 +78,7 @@
                <p><a href="#">Link</a></p>
                <p><a href="#">Link</a></p>
             </div>
+            -->
             <div class="col-sm-7">
                <div class="row">
                   <div class="col-sm-12">
@@ -103,9 +106,12 @@
                </div>
                <div class="row">
                   <div class="col-sm-12">
-                     <img src="{{ url_for('static', filename = image) }}"></img>
+                     <!--<img src="{{ url_for('static', filename = image) }}"></img>-->
+                     <div id='parent' style="width: 500px; height: 400px;"></div>
+
                   </div>
                </div>
+               <!--
                <div class="row">
                   <div class="col-sm-3">
                      <div class="well">
@@ -145,6 +151,7 @@
                      </div>
                   </div>
                </div>
+               -->
             </div>
             <div class="col-sm-3 well">
                <div class="thumbnail">
@@ -165,11 +172,11 @@
                   <button type="submit" class="btn btn-primary" >GO</button>
                </div>
                <div class="well">
-                  <p>ADS</p>
+               <!--   <p>ADS</p>
                </div>
                <div class="well">
                   <p>ADS</p>
-               </div>
+               </div>-->
             </div>
          </div>
         </form>
@@ -187,6 +194,12 @@
       orderDim.change = function(value, item) {
           console.log('change', value);
       };
+      $('#parent').append('<div id="mapid" style="width: 500px; height: 400px;"></div>');
+      d = new Date();
+      loadImg2("/static/imgs/composite_img.png?" + d.getTime(), 2229, 2058);
+      
+
+      
    </script>
 </html>
 

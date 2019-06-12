@@ -27,6 +27,7 @@ def interactive_heidi():
     del cleaned_file['id']
     print(cleaned_file)
     paramObj = heidi_api.getAllSubspaces(cleaned_file, filename)
+    session['paramObj'] = cPickle.dumps(paramObj)
     return render_template('dimension_new.html', title = 'visual tool', user = current_user, paramObj = paramObj) #title='dimension Visualization',datasetPath=datasetPath,user=current_user, dimensions=['a','b','c'])
     
 
