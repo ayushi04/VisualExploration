@@ -55,7 +55,7 @@ class HeidiMatrix:
         self.dataset = ''
         self.pointsOrder = []
         self.subspaceHeidi_map = {}
-        self.subspace_obj = ''
+        self.subspaceList = '' #[(a,b,c), (a)] [tuple, tuple, ..]
         self.knn = 20
         self.datasetname = ''
 
@@ -63,28 +63,23 @@ class HeidiMatrix:
         self.dataset = dataset
         self.pointsOrder = list(dataset.index)
         self.datasetname = datasetname
-        self.subspace_obj = SubspaceCl()
-        self.subspace_obj.initialize(dataset.columns)
+        self.subspaceList = []
         #self._setSubspaceHeidi_map()
     
     def getSubspaceHeidi_map(self):
         return self.subspaceHeidi_map
 
-    def getSubspace_obj(self):
-        return self.subspace_obj
+    def getSubspaceList(self):
+        return self.subspaceList
     
     def getHeidiMatrix_oneSubspace(self,subspace):
         return self.subspaceHeidi_map[subspace]
 
-    def getHeidiMatrix(self, subspaceVector):
-        #TODO : write code here to create matrix for input subspaces
-        pass
-    
     def getHeidiMatrix_allSubspace(self):
         #TODO : write code to create Heidi matrix for all subspaces
         pass
 
-    def setSubspaceHeidi_map_db(self,subspaces):
+    def setSubspaceHeidi_map_db(self):
         """
         sets the subspaceHeidi_map dictionary object
         e.g.,
@@ -95,10 +90,12 @@ class HeidiMatrix:
         INPUT:
         subspaces=[]
         """
-        pass
+        for subspace in self.subspaceList:
+            heidiMap = models.SubspaceHeidiMap.query.filter_by(subspace = str(subspace), dataset = self.datasetname).first()
+            self.subspaceHeidi_map[subspace] = cPickle.loads(heidiMap.heidiMatrix)
         
 
-    def setSubspaceAllHeidi_map(self):
+    def setSubspaceHeidi_map(self):
         """
         sets the subspaceHeidi_map dictionary object
         e.g.,
@@ -106,16 +103,11 @@ class HeidiMatrix:
         subspaceHeidi_map[(d1,d2)]=np.array([[],.....[]]) 
         subspaceHeidi_map[(d1)]=np.array([[],.....[]]) 
         """
-        self.subspace_obj.setAllSubspace()
-        for subspace in self.subspace_obj.getAllSubspace():
+        for subspace in self.subspaceList:
             self.subspaceHeidi_map[subspace] = self._createHeidiMatrix(subspace)
 
-    def setSubspace_obj(self, sobj):
-        self.subspace_obj = sobj
-
-    def setSubspace_obj(self):
-        self.subspace_obj = SubspaceCl
-        self.subspace_obj.initialize(self.dataset.columns)
+    def setSubspaceList(self, subspaceList):
+        self.subspaceList = subspaceList
 
     def _createHeidiMatrix(self, subspace):
         #DONE : write Heidi algorithm to return knn matrix for this subspace
@@ -193,7 +185,8 @@ class HeidiImage:
         index_list = np.where(np.all(composite_img == [0,0,0], axis=-1))
         composite_img[index_list]=[255,255,255]
         composite_img = Image.fromarray(composite_img)
-        composite_img.save('./imgs/composite_img.png')
+        #composite_img.save('./imgs/composite_img.png')
+        composite_img.save('./static/imgs/composite_img.png')
         return composite_img
         
     def getSubspaceHeidiImage_map(self):

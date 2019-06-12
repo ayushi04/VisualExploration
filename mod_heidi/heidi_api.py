@@ -1,5 +1,9 @@
+from flask import request, render_template, Blueprint, json, redirect, url_for, flash, session
+
 from mod_heidiPreprocessing import assign_color, order_points, subspace_filter
 from mod_heidi import heidi_classes
+import _pickle as cPickle
+import models
 
 class HeidiParam:
 
@@ -26,14 +30,15 @@ def getAllSubspaces(dataset, datasetname):
 
 	heidiMatrix_obj = heidi_classes.HeidiMatrix()
 	heidiMatrix_obj.initialize(dataset, datasetname)
-	heidiMatrix_obj.setSubspaceAllHeidi_map()
+	heidiMatrix_obj.setSubspaceList(allSubspaces)
+	heidiMatrix_obj.setSubspaceHeidi_map()
 	subspaceHeidiMatrix_map = heidiMatrix_obj.getSubspaceHeidi_map()
 	
 	heidiImage_obj = heidi_classes.HeidiImage()
 	heidiImage_obj.initialize(dataset, datasetname)
 	heidiImage_obj.setHeidiMatrix_obj(heidiMatrix_obj)
-	#print('allsubspaces',allSubspaces)
 	heidiImage_obj.setSubspaceVector(allSubspaces)
+	#print('allsubspaces',allSubspaces)
 	heidiImage_obj.setSubspaceHeidiImage_map()
 	
 	
@@ -52,9 +57,30 @@ def getAllSubspaces(dataset, datasetname):
 
 	return paramobj
 
-def getSelectedSubspaces(dataset, colorList):
-	colorMap = assign_color.getColormap_DB(dataset, colorList)
+def getSelectedSubspaces(datasetname, colorList):
+	obj = models.Dataset.query.filter_by(name=datasetname).first() #SERAILIZED CONTENT FROM DATABASE
+	dataset = cPickle.loads(obj.content) #cleaned file is stored in Database
+	colorMap = assign_color.getColormap_DB(datasetname, colorList)
+	selectedSubspaces = list(colorMap.keys())
+
 	heidiMatrix_obj = heidi_classes.HeidiMatrix()
 	heidiMatrix_obj.initialize(dataset, datasetname)
+	heidiMatrix_obj.setSubspaceList(selectedSubspaces)
+	heidiMatrix_obj.setSubspaceHeidi_map_db()
+	subspaceHeidiMatrix_map = heidiMatrix_obj.getSubspaceHeidi_map()
+	
+	heidiImage_obj = heidi_classes.HeidiImage()
+	heidiImage_obj.initialize(dataset, datasetname)
+	heidiImage_obj.setHeidiMatrix_obj(heidiMatrix_obj)
+	heidiImage_obj.setSubspaceVector(selectedSubspaces)
+	#print('allsubspaces',allSubspaces)
+	heidiImage_obj.setSubspaceHeidiImage_map()
+	
+	
+	compositeImage = heidiImage_obj.getHeidiImage()
+
+	return compositeImage
+	
+
 	
     

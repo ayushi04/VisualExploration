@@ -78,10 +78,14 @@ def upload():
         try:
 
             serialized_content = cPickle.dumps(cleaned_file) 
-            session['cleaned_file'] = serialized_content
-            #dataset = Dataset(filename, download_path, serialized_content)
-            #db.session.add(dataset)
-            #db.session.commit()
+            #session['cleaned_file'] = serialized_content
+            existingDataset = Dataset.query.filter_by(name=filename).all()
+            for data in existingDataset:
+                db.session.delete(data)
+
+            dataset = Dataset(filename, download_path, serialized_content)
+            db.session.add(dataset)
+            db.session.commit()
         except Exception as e:
             
             print(e)

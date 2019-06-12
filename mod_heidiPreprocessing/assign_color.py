@@ -1,6 +1,7 @@
 import webcolors as wb
 import models
 from app import db
+from ast import literal_eval as make_tuple
 
 class ColorAssign:
 
@@ -64,10 +65,9 @@ def getColormap_DB(datasetname, colorList = None):
 			subspace = tuple(obj.subspace[1:-1].split(','))
 			colorMap[subspace] = obj.color
 		return colorMap
-
 	#IF COLORLIST IS NOT NONE
 	for color in colorList:
 		obj = models.SubspaceColorMap.query.filter_by(dataset=datasetname, color=color).first()
-		subspace = tuple(obj.subspace[1:-1].split(','))
+		subspace = make_tuple(obj.subspace)
 		colorMap[subspace] = color
 	return colorMap
