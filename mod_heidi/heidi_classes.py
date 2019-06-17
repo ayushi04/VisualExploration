@@ -4,9 +4,11 @@ import pandas as pd
 import _pickle as cPickle
 from sklearn.neighbors import NearestNeighbors
 from PIL import Image
+from flask import session
 
 import models
 from mod_heidiPreprocessing import assign_color
+from mod_heidi import jaccardMatrix
 from app import db
 import cv2
 
@@ -56,7 +58,7 @@ class HeidiMatrix:
         self.pointsOrder = []
         self.subspaceHeidi_map = {}
         self.subspaceList = '' #[(a,b,c), (a)] [tuple, tuple, ..]
-        self.knn = 20
+        self.knn = 10
         self.datasetname = ''
 
     def initialize(self, dataset, datasetname):
@@ -238,5 +240,118 @@ def saveHeidiMatrix_DB(subspaceHeidiMatrix_map, subspaceHeidiImage_map, datasetn
 
 
 
+def getBlockId(x,y,cleaned_file):
+    #rowBlock = 0
+    #colBlock = 1
+    #return rowBlock, colBlock
+    #TODO remove hardcode and write code here
+    classLabel= list(cleaned_file['classLabel'])
+    class_count=[]
+    class_label=[]
+    for i in set(classLabel):
+        c=classLabel.count(i)
+        class_count.append(c)
+        class_label.append(i)
+    print('class_count', class_count)
+    print('classLabel', class_label)
+    c=0
+    for i in range(len(class_count)):
+        c = c + class_count[i]
+        if(c >= x):
+            block_row = i
+            break
+    c=0
+    for i in range(len(class_count)):
+        c = c + class_count[i]
+        if(c >= y):
+            block_col = i
+            break
+
+    return block_row, block_col
+    
+def getBlockRange(block_row,block_col,cleaned_file):
+    #count = cleaned_file['classLabel'].value_counts()
+    x= list(cleaned_file['classLabel'])
+    class_count=[]
+    class_label=[]
+    for i in set(x):
+        c=x.count(i)
+        class_count.append(c)
+        class_label.append(i)
+    tlx=0
+    tly=0
+    #print('BBLOCK',block_row,block_col)
+    for i in range(block_row): tlx = tlx + int(class_count[i])
+    for i in range(block_col): tly = tly + int(class_count[i])
+    brx=0
+    bry=0
+    for i in range(block_row+1): brx = brx + int(class_count[i])
+    for i in range(block_col+1): bry = bry + int(class_count[i])
+    
+    return tlx+1, tly+1, brx-1, bry-1
 
 
+def getPatternPoints(compositeImg,rowBlock,colBlock, cleaned_file, selectedColor):
+    pix = compositeImg.load()
+    rowPoints = []
+    colPoints = []
+    tlx, tly, brx, bry = getBlockRange(rowBlock,colBlock,cleaned_file)
+    print('range:', tlx,tly,brx, bry)
+    print('selectedColor', selectedColor)
+    for i in range(tlx, brx +1):
+        for j in range(tly, bry + 1):
+            if(pix[i,j]==selectedColor):
+                rowPoints.append(cleaned_file.loc[i,'id'])
+                colPoints.append(cleaned_file.loc[j,'id'])
+    rowPoints = list(set(rowPoints))
+    colPoints = list(set(colPoints))
+    return rowPoints, colPoints
+
+def getAllPatternsInBlock(rowBlock, colBlock, cleaned_file):
+    tlx, tly, brx, bry = getBlockRange(rowBlock,colBlock, cleaned_file)
+    '''
+    #wb.rgb_to_hex(self.colorList[i])
+    for k in colormap:
+        print('subspace: ', k, 'color: ', colormap[k])
+        img = 
+        cropped_img = compositeImg.crop((tlx, tly, brx, bry))
+        cropped_img.save('./static/imgs/cropped_img.png')
+        pix = compositeImg.load()
+    '''
+    #del cleaned_file['classLabel']
+    #cleaned_file.index = cleaned_file['id']
+    #del cleaned_file['id']
+
+    datasetname=session["filename"]
+    colorMap = cPickle.loads(session["paramObj"]).allSubspaces_colormap
+    allSubspaces = list(colorMap.keys())
+
+    heidiMatrix_obj = HeidiMatrix()
+    heidiMatrix_obj.initialize(cleaned_file, datasetname)
+    heidiMatrix_obj.setSubspaceList(allSubspaces)
+    heidiMatrix_obj.setSubspaceHeidi_map_db()
+    subspaceHeidiMatrix_map = heidiMatrix_obj.getSubspaceHeidi_map()
+    
+    heidiImage_obj = HeidiImage()
+    heidiImage_obj.initialize(cleaned_file, datasetname)
+    heidiImage_obj.setHeidiMatrix_obj(heidiMatrix_obj)
+    heidiImage_obj.setSubspaceVector(allSubspaces)
+    #print('allsubspaces',allSubspaces)
+    heidiImage_obj.setSubspaceHeidiImage_map()
+
+    patterns_df = pd.DataFrame(columns=['color','subspace','rowPoints','colPoints'])
+    i=0
+    for subspace in allSubspaces:
+        imgarray = heidiImage_obj.getHeidiImage_oneSubspace(subspace)
+        img = Image.fromarray(imgarray)
+        colors = img.convert('RGB').getcolors()
+        print(colors[1][1])
+        rowPoints,colPoints = getPatternPoints(img,rowBlock,colBlock, cleaned_file,colors[1][1])
+        print(rowPoints, colPoints)
+        patterns_df.loc[i] = [str(colors[1][1]), str(subspace), rowPoints, colPoints]
+        img.save('static/output/temp'+str(i)+'.png')    
+        i=i+1
+    print(patterns_df)
+    mat = jaccardMatrix.getJaccardMatrix(patterns_df)
+    print(mat)
+    return mat

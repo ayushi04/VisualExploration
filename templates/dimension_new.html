@@ -111,6 +111,36 @@
 
                   </div>
                </div>
+               <div class="row">
+                  <div class="col-sm-6">
+                     <!-- DRAW MATRIX PLOT FOR SUBSPACE HERE -->
+                     <div id='matrixPlot'></div>
+                  </div>
+                  <div class="col-sm-6">
+                     <!-- DRAW RECTANGLE BAR PLOT HERE -->
+                     <div id='rectanglePlot'></div>
+                  </div>
+               </div>
+               <div class="row">
+                  <div class="col-sm-6">
+                     col points
+                     <div id="table2" style="overflow:scroll; height:400px;"></div>
+                  </div>
+                   <div class="col-sm-6">
+                     row points
+                     <div id="table3" style="overflow:scroll; height:400px;"></div>
+                   </div>
+               </div>
+               <div class="row">
+                  <div class="col-sm-9">
+                      <div id='parallelPlot'></div>
+                  </div>
+               </div>
+               <div class="row">
+                  <div class="col-sm-9">
+                      <div id='jaccardMatrix'></div>
+                  </div>
+               </div>
                <!--
                <div class="row">
                   <div class="col-sm-3">
@@ -197,6 +227,7 @@
       $('#parent').append('<div id="mapid" style="width: 500px; height: 400px;"></div>');
       d = new Date();
       loadImg2("/static/imgs/composite_img.png?" + d.getTime(), 2229, 2058);
+      
       
 
       
