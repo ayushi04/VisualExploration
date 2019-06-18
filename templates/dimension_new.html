@@ -195,11 +195,11 @@
                         <td><b>Set of subspaces</b></td>
                         <td>select</td>
                      </tr>
-                     {% for subspace in paramObj.allSubspaces_colormap %}
+                     {% for subspace in paramObj.filteredSubspaces_colormap %}
                      <tr>
-                        <td bgcolor={{paramObj.allSubspaces_colormap[subspace]}} class='backgroundcolor'></td>
+                        <td bgcolor={{paramObj.filteredSubspaces_colormap[subspace]}} class='backgroundcolor'></td>
                         <td>{{subspace}}</td>
-                        <td><input type='checkbox' name='color[]' value='{{paramObj.allSubspaces_colormap[subspace]}}'></td>
+                        <td><input type='checkbox' name='color[]' value='{{paramObj.filteredSubspaces_colormap[subspace]}}'></td>
                      </tr>
                      {%endfor%}
                   </table>

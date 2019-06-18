@@ -94,7 +94,8 @@ def upload():
         del cleaned_file['classLabel']
         cleaned_file.index = cleaned_file['id']
         del cleaned_file['id']
-        paramObj = heidi_api.getAllSubspaces(cleaned_file, filename)
+        #paramObj = heidi_api.getAllSubspaces(cleaned_file, filename)
+
         #return render_template('success.html', download_path=download_path, user=current_user)
         #return render_template('dimension_new.html', title = 'visual tool', user = current_user, paramObj = paramObj) #title='dimension Visualization',datasetPath=datasetPath,user=current_user, dimensions=['a','b','c'])
         return redirect(url_for('heidi_controllers.interactive_heidi'))

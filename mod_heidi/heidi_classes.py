@@ -93,8 +93,10 @@ class HeidiMatrix:
         subspaces=[]
         """
         for subspace in self.subspaceList:
+            print(subspace)
             heidiMap = models.SubspaceHeidiMap.query.filter_by(subspace = str(subspace), dataset = self.datasetname).first()
             self.subspaceHeidi_map[subspace] = cPickle.loads(heidiMap.heidiMatrix)
+
 
     """
     Reorders the matrices in subspaceHeidi_map based on newPointsOrder given
@@ -232,12 +234,26 @@ def saveHeidiMatrix_DB(subspaceHeidiMatrix_map, subspaceHeidiImage_map, datasetn
     subspaceHeidiMatrix_map : dictionary type
     {(d1,d2):[[0,1,.....1],.....[1,1,.......0]}
     """
+    existingDataset = models.SubspaceHeidiMap.query.filter_by(dataset=datasetname).all()
+    for data in existingDataset:
+        db.session.delete(data)
     objects = []
+    '''
     for key in subspaceHeidiMatrix_map:
+        print('kkkk',key)
         serialized_matrix = cPickle.dumps(subspaceHeidiMatrix_map[key])
-        img = subspaceHeidiImage_map[key]
-        img = Image.fromarray(img)
+        img = ''
+        if(key in subspaceHeidiImage_map.keys()):
+            img = subspaceHeidiImage_map[key]
+            img = Image.fromarray(img)
         serialized_image = cPickle.dumps(img)
+        obj = models.SubspaceHeidiMap(str(key), datasetname, serialized_matrix, serialized_image) # (subspace:tuple_string,datasetname:string, heidi_matrix (2-d numpy array), heidi_image)
+        objects.append(obj)
+    '''
+    for key in subspaceHeidiImage_map:
+        print('kkkk',key)
+        serialized_matrix = cPickle.dumps(subspaceHeidiMatrix_map[key])
+        serialized_image = cPickle.dumps(subspaceHeidiImage_map[key])
         obj = models.SubspaceHeidiMap(str(key), datasetname, serialized_matrix, serialized_image) # (subspace:tuple_string,datasetname:string, heidi_matrix (2-d numpy array), heidi_image)
         objects.append(obj)
     db.session.bulk_save_objects(objects)
@@ -302,8 +318,8 @@ def getPatternPoints(compositeImg,rowBlock,colBlock, cleaned_file, selectedColor
     colPoints = []
     pointsPair = []
     tlx, tly, brx, bry = getBlockRange(rowBlock,colBlock,cleaned_file)
-    print('range:', tlx,tly,brx, bry)
-    print('selectedColor', selectedColor)
+    #print('range:', tlx,tly,brx, bry)
+    #print('selectedColor', selectedColor)
     for i in range(tlx, brx +1):
         for j in range(tly, bry + 1):
             if(pix[i,j]==selectedColor):
@@ -332,7 +348,8 @@ matrix: similarity matrix (dataframe)
 def getAllPatterns_block(rowBlock, colBlock, cleaned_file):
     tlx, tly, brx, bry = getBlockRange(rowBlock,colBlock, cleaned_file)
     datasetname=session["filename"]
-    colorMap = cPickle.loads(session["paramObj"]).allSubspaces_colormap
+    colorMap = cPickle.loads(session["paramObj"]).filteredSubspaces_colormap
+    print(colorMap.keys(),'-----------hello----------------')
     allSubspaces = list(colorMap.keys())
 
     heidiMatrix_obj = HeidiMatrix()

@@ -33,6 +33,9 @@ def saveColormap_DB(color_map, datasetname):
 	e.g., 
 	{(d1,d2):#ffff12, (d1):#ff12ff, (d2):#1234ff}
 	"""
+	existingDataset = models.SubspaceColorMap.query.filter_by(dataset=datasetname).all()
+	for data in existingDataset:
+		db.session.delete(data)
 	objects = []
 	for key in color_map:
 		obj = models.SubspaceColorMap(datasetname, color_map[key], str(key)) #(datasetname, color, str(subspace))
@@ -58,7 +61,9 @@ def getColormap_DB(datasetname, colorList = None):
 	{(d1,d2):#f04a1c, (d1):#60385a, (d2):#3e5617} 
 	{tuple:string} 
 	"""
+
 	colorMap = {}
+
 	if(colorList is None):
 		objects = models.SubspaceColorMap.query.filter_by(dataset=datasetname).all()
 		for obj in objects:

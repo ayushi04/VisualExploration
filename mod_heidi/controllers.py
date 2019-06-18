@@ -15,7 +15,9 @@ from mod_datacleaning import data_cleaning
 from mod_heidi import heidi_api
 from mod_heidi import heidi_classes
 from mod_heidiPreprocessing import assign_color
+from mod_heidiPreprocessing.subspace_search_heidi import SubspaceSearch_Heidi
 from mod_heidi import jaccardMatrix
+
 
 mod_heidi_controllers = Blueprint('heidi_controllers', __name__)
 
@@ -27,8 +29,27 @@ def interactive_heidi():
     del cleaned_file['classLabel']
     cleaned_file.index = cleaned_file['id']
     del cleaned_file['id']
-    print(cleaned_file)
-    paramObj = heidi_api.getAllSubspaces(cleaned_file, filename)
+    #print(cleaned_file)
+    heidiMatrix_obj = heidi_api.matrix_map(cleaned_file,filename)
+    subspaceHeidiMatrix_map = heidiMatrix_obj.getSubspaceHeidi_map()
+
+    #GET INTERESTING SUBSPACES
+    classLabel= list(cPickle.loads(obj.content)['classLabel'])
+    class_count=[]
+    class_label=[]
+    for i in set(classLabel):
+        c=classLabel.count(i)
+        class_count.append(c)
+        class_label.append(i)
+    #print('class_count', class_count)
+    sobj = SubspaceSearch_Heidi()
+    sobj.initialize(class_count, subspaceHeidiMatrix_map)
+    filtered_subspaces = sobj.getTopAInterestingSubspace(15)
+    print('-------------------------------------------------')
+    print(filtered_subspaces)
+    #filtered_subspaces = list(subspaceHeidiMatrix_map.keys())
+    paramObj = heidi_api.image_map(cleaned_file, filename, heidiMatrix_obj, filtered_subspaces)
+    session['paramObj'] = cPickle.dumps(paramObj)
     jaccard_matrix = ''
     patterns_df = heidi_classes.getAllPatterns_block( 0, 1,cPickle.loads(obj.content))
     jaccard_matrix = jaccardMatrix.getJaccardMatrix(patterns_df)
@@ -54,7 +75,6 @@ def heidi():
     del cleaned_file['classLabel']
     cleaned_file.index = cleaned_file['id']
     del cleaned_file['id']
-    #paramObj = heidi_api.getAllSubspaces(cleaned_file, datasetname)
     paramObj = cPickle.loads(session['paramObj'])
 
     #CODE TO ORDER POINTS BASED ON ORDER DIM (CAN DO LATER)
@@ -112,20 +132,20 @@ def highlightPattern():
 
     x=int(math.ceil(x))
     y=int(math.ceil(y))
-    print(x,y)
+    #print(x,y)
     colorList = session['selectedColors']
     compositeImg = heidi_api.getSelectedSubspaces(datasetName,colorList)
     pix = compositeImg.load()
-    print(pix[x,y],'pixxx')
+    #print(pix[x,y],'pixxx')
     colorList = session['selectedColors']
 
     rowBlock,colBlock = heidi_classes.getBlockId(x,y,cleaned_file)
-    print('blockid:', rowBlock, colBlock)
+    #print('blockid:', rowBlock, colBlock)
     rowPoints,colPoints,pointsPair = heidi_classes.getPatternPoints(compositeImg,rowBlock,colBlock, cleaned_file,pix[x,y])
-    print(rowPoints, colPoints, pointsPair)
+    #print(rowPoints, colPoints, pointsPair)
     rowPoints_df = cleaned_file[cleaned_file['id'].isin(rowPoints)]
     colPoints_df = cleaned_file[cleaned_file['id'].isin(colPoints)]
-    print(rowPoints_df)
+    #print(rowPoints_df)
     t=pd.DataFrame(rowPoints_df)
     t=t.append(colPoints_df)
     t.to_csv('static/output/rowColPoints.csv');
