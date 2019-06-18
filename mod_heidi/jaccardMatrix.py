@@ -8,7 +8,19 @@ def getJaccardMatrix(patterns_df):
     for i in range(0, patterns_df.shape[0]):
         for j in range(0, patterns_df.shape[0]):
             similarity_score,_,_,_ = jaccard(set(patterns_df.iloc[i,2] + patterns_df.iloc[i,3]),set(patterns_df.iloc[j,2] + patterns_df.iloc[j,3]))     
-            if similarity_score > 0.6:
+            if similarity_score >= 0.5:
+                mat[i,j] =similarity_score
+
+    mat=pd.DataFrame(mat,columns=list(patterns_df.loc[:,'subspace']),index=list(patterns_df.loc[:,'subspace']))
+    return mat
+
+def getJaccardMatrix2(patterns_df):
+    
+    mat=np.zeros((patterns_df.shape[0],patterns_df.shape[0]))
+    for i in range(0, patterns_df.shape[0]):
+        for j in range(0, patterns_df.shape[0]):
+            similarity_score,_,_,_ = jaccard(set(patterns_df.iloc[i,4]),set(patterns_df.iloc[j,4]))     
+            if similarity_score >= 0.3:
                 mat[i,j] =similarity_score
 
     mat=pd.DataFrame(mat,columns=list(patterns_df.loc[:,'subspace']),index=list(patterns_df.loc[:,'subspace']))

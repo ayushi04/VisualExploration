@@ -48,7 +48,7 @@ function loadImg2(url, w, h) {
             $('#table2').html(convertJsonToTable(JSON.parse(result['rowPoints'])));
             $('#table3').html(convertJsonToTable(JSON.parse(result['colPoints'])));
             drawParallelCoordinate('parallelPlot');
-            $('#jaccardMatrix').html(convertJsonToTable(JSON.parse(result['jaccard_matrix'])));
+            //$('#jaccardMatrix').html(convertJsonToTable(JSON.parse(result['jaccard_matrix'])));
             $('#mapid2').remove();
             $('#parent2').append('<div id="mapid2" style="width: 500px; height: 400px;"></div>')
             d = new Date();

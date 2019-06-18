@@ -15,6 +15,7 @@ from mod_datacleaning import data_cleaning
 from mod_heidi import heidi_api
 from mod_heidi import heidi_classes
 from mod_heidiPreprocessing import assign_color
+from mod_heidi import jaccardMatrix
 
 mod_heidi_controllers = Blueprint('heidi_controllers', __name__)
 
@@ -28,8 +29,17 @@ def interactive_heidi():
     del cleaned_file['id']
     print(cleaned_file)
     paramObj = heidi_api.getAllSubspaces(cleaned_file, filename)
+    jaccard_matrix = ''
+    patterns_df = heidi_classes.getAllPatterns_block( 0, 1,cPickle.loads(obj.content))
+    jaccard_matrix = jaccardMatrix.getJaccardMatrix(patterns_df)
+    jaccard_matrix2 = jaccardMatrix.getJaccardMatrix2(patterns_df)
     session['paramObj'] = cPickle.dumps(paramObj)
-    return render_template('dimension_new.html', title = 'visual tool', user = current_user, paramObj = paramObj) #title='dimension Visualization',datasetPath=datasetPath,user=current_user, dimensions=['a','b','c'])
+    session['jaccard_matrix'] = cPickle.dumps(jaccard_matrix)
+    session['jaccard_matrix2'] = cPickle.dumps(jaccard_matrix2)
+    return render_template('dimension_new.html', title = 'visual tool', user = current_user, \
+                                paramObj = paramObj, \
+                                jaccard_matrix = jaccard_matrix.reset_index().to_json(orient='records'), \
+                                jaccard_matrix2 = jaccard_matrix2.reset_index().to_json(orient='records'))
     
 
 #CREATE HEIDI IMAGE BASED ON USER SELECTION (SUBSPACES, ORDER DIM)
@@ -57,7 +67,14 @@ def heidi():
     compositeImg = heidi_api.getSelectedSubspaces(datasetname,colorList)
     #session['compositeImg'] =cPickle.dumps(compositeImg)
     session['selectedColors'] = colorList 
-    return render_template('dimension_new.html', title = 'visual tool', user = current_user, paramObj = paramObj, image = 'imgs/composite_img.png')
+    jaccard_matrix = cPickle.loads(session['jaccard_matrix'])
+    jaccard_matrix2 = cPickle.loads(session['jaccard_matrix2'])
+    return render_template('dimension_new.html', title = 'visual tool', \
+                            user = current_user, paramObj = paramObj, \
+                            image = 'imgs/composite_img.png', \
+                            jaccard_matrix = jaccard_matrix.reset_index().to_json(orient='records'), \
+                            jaccard_matrix2 = jaccard_matrix2.reset_index().to_json(orient='records') \
+                            )
 
 
 
@@ -104,20 +121,21 @@ def highlightPattern():
 
     rowBlock,colBlock = heidi_classes.getBlockId(x,y,cleaned_file)
     print('blockid:', rowBlock, colBlock)
-    rowPoints,colPoints = heidi_classes.getPatternPoints(compositeImg,rowBlock,colBlock, cleaned_file,pix[x,y])
-    print(rowPoints, colPoints)
+    rowPoints,colPoints,pointsPair = heidi_classes.getPatternPoints(compositeImg,rowBlock,colBlock, cleaned_file,pix[x,y])
+    print(rowPoints, colPoints, pointsPair)
     rowPoints_df = cleaned_file[cleaned_file['id'].isin(rowPoints)]
     colPoints_df = cleaned_file[cleaned_file['id'].isin(colPoints)]
     print(rowPoints_df)
     t=pd.DataFrame(rowPoints_df)
     t=t.append(colPoints_df)
     t.to_csv('static/output/rowColPoints.csv');
-    jaccard_matrix = heidi_classes.getAllPatternsInBlock( 0, 1, cleaned_file)
-    return json.dumps({'rowPoints':rowPoints_df.to_json(orient='records'),'colPoints':colPoints_df.to_json(orient='records'), 'jaccard_matrix':jaccard_matrix.reset_index().to_json(orient='records')})
-    #'path':output+'/'+filename, 
-    #'rowPoints_save':rowPoints_save.reset_index().to_json(orient='records'),\
-    #'colPoints_save':colPoints_save.reset_index().to_json(orient='records'),
-    #'dist':dist.to_json(orient='records'),
-    #'pair':pair.to_json(orient='records'),'dim':s,'allFig':allFig})
-
-    #return redirect(url_for('heidi_controllers.interactive_heidi'))
+    return json.dumps({'rowPoints':rowPoints_df.to_json(orient='records'),'colPoints':colPoints_df.to_json(orient='records')})
+    
+@mod_heidi_controllers.route('/jaccardMatrix')
+def jaccardMatrix_Controller():    
+    datasetName = session['filename']
+    obj = models.Dataset.query.filter_by(name=datasetName).first()
+    cleaned_file = cPickle.loads(obj.content)
+    jaccard_matrix = heidi_classes.getAllPatterns_block( 0, 1, cleaned_file)
+    return json.dumps({'jaccard_matrix':jaccard_matrix.reset_index().to_json(orient='records')})
+    

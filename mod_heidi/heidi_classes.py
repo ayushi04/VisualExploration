@@ -95,7 +95,12 @@ class HeidiMatrix:
         for subspace in self.subspaceList:
             heidiMap = models.SubspaceHeidiMap.query.filter_by(subspace = str(subspace), dataset = self.datasetname).first()
             self.subspaceHeidi_map[subspace] = cPickle.loads(heidiMap.heidiMatrix)
-        
+
+    """
+    Reorders the matrices in subspaceHeidi_map based on newPointsOrder given
+    """
+    def reorderHeidiMatrix(self, newPointsOrder):
+        pass        
 
     def setSubspaceHeidi_map(self):
         """
@@ -295,6 +300,7 @@ def getPatternPoints(compositeImg,rowBlock,colBlock, cleaned_file, selectedColor
     pix = compositeImg.load()
     rowPoints = []
     colPoints = []
+    pointsPair = []
     tlx, tly, brx, bry = getBlockRange(rowBlock,colBlock,cleaned_file)
     print('range:', tlx,tly,brx, bry)
     print('selectedColor', selectedColor)
@@ -303,25 +309,28 @@ def getPatternPoints(compositeImg,rowBlock,colBlock, cleaned_file, selectedColor
             if(pix[i,j]==selectedColor):
                 rowPoints.append(cleaned_file.loc[i,'id'])
                 colPoints.append(cleaned_file.loc[j,'id'])
+                pointsPair.append((cleaned_file.loc[i,'id'],cleaned_file.loc[j,'id']))
     rowPoints = list(set(rowPoints))
     colPoints = list(set(colPoints))
-    return rowPoints, colPoints
+    return rowPoints, colPoints, pointsPair
 
-def getAllPatternsInBlock(rowBlock, colBlock, cleaned_file):
+"""
+This method computes the similarity of different color patterns in a Heidi Block
+Similarity Measure: Jaccard Similarity of (rowPoints U colPoints ) set
+
+INPUT
+------
+rowBlock: row Block number (integer)
+colBlock: column Block number (integer)
+cleaned_file: file with id and classLabel as columns (dataframe)
+
+OUTPUT
+--------
+matrix: similarity matrix (dataframe)
+
+"""
+def getAllPatterns_block(rowBlock, colBlock, cleaned_file):
     tlx, tly, brx, bry = getBlockRange(rowBlock,colBlock, cleaned_file)
-    '''
-    #wb.rgb_to_hex(self.colorList[i])
-    for k in colormap:
-        print('subspace: ', k, 'color: ', colormap[k])
-        img = 
-        cropped_img = compositeImg.crop((tlx, tly, brx, bry))
-        cropped_img.save('./static/imgs/cropped_img.png')
-        pix = compositeImg.load()
-    '''
-    #del cleaned_file['classLabel']
-    #cleaned_file.index = cleaned_file['id']
-    #del cleaned_file['id']
-
     datasetname=session["filename"]
     colorMap = cPickle.loads(session["paramObj"]).allSubspaces_colormap
     allSubspaces = list(colorMap.keys())
@@ -339,19 +348,16 @@ def getAllPatternsInBlock(rowBlock, colBlock, cleaned_file):
     #print('allsubspaces',allSubspaces)
     heidiImage_obj.setSubspaceHeidiImage_map()
 
-    patterns_df = pd.DataFrame(columns=['color','subspace','rowPoints','colPoints'])
+    patterns_df = pd.DataFrame(columns=['color','subspace','rowPoints','colPoints','pointsPair'])
     i=0
     for subspace in allSubspaces:
         imgarray = heidiImage_obj.getHeidiImage_oneSubspace(subspace)
         img = Image.fromarray(imgarray)
         colors = img.convert('RGB').getcolors()
-        print(colors[1][1])
-        rowPoints,colPoints = getPatternPoints(img,rowBlock,colBlock, cleaned_file,colors[1][1])
-        print(rowPoints, colPoints)
-        patterns_df.loc[i] = [str(colors[1][1]), str(subspace), rowPoints, colPoints]
+        rowPoints,colPoints,pointsPair = getPatternPoints(img,rowBlock,colBlock, cleaned_file,colors[1][1])
+        patterns_df.loc[i] = [str(colors[1][1]), str(subspace), rowPoints, colPoints, pointsPair]
         img.save('static/output/temp'+str(i)+'.png')    
         i=i+1
-    print(patterns_df)
-    mat = jaccardMatrix.getJaccardMatrix(patterns_df)
-    print(mat)
-    return mat
+    return patterns_df
+    #mat = jaccardMatrix.getJaccardMatrix(patterns_df)
+    #return mat

@@ -10,6 +10,7 @@
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
       <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
       <link href="{{ url_for('static', filename='ui-choose/ui-choose.css' ) }}" rel="stylesheet" />
+      <link rel="stylesheet" href="{{ url_for('static',filename='css/dist/leaflet.css') }}" />
       <script src="{{ url_for('static',filename='js/dist/leaflet.js') }}" ></script>
       <script src="{{ url_for('static',filename='js/dist/d3.v3.js') }}"></script>
       <script src="{{ url_for('static',filename='js/dist/plotly-latest.min.js') }}"></script>
@@ -104,13 +105,7 @@
                      </div>
                   </div>
                </div>
-               <div class="row">
-                  <div class="col-sm-12">
-                     <!--<img src="{{ url_for('static', filename = image) }}"></img>-->
-                     <div id='parent' style="width: 500px; height: 400px;"></div>
-
-                  </div>
-               </div>
+               <div class="row col-sm-12" id='parent' style="width: 650px; height: 550px;"></div>
                <div class="row">
                   <div class="col-sm-6">
                      <!-- DRAW MATRIX PLOT FOR SUBSPACE HERE -->
@@ -138,7 +133,16 @@
                </div>
                <div class="row">
                   <div class="col-sm-9">
-                      <div id='jaccardMatrix'></div>
+                      <div id='jaccardMatrix'>
+                        
+                      </div>
+                  </div>
+               </div>
+               <div class="row">
+                  <div class="col-sm-9">
+                      <div id='jaccardMatrix2'>
+                        
+                      </div>
                   </div>
                </div>
                <!--
@@ -215,8 +219,9 @@
    <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
    <script src="{{ url_for('static', filename='ui-choose/ui-choose.js' ) }}"></script>
    <script>
+      var jaccard_matrix = {{jaccard_matrix | tojson}};
+      var jaccard_matrix2 = {{jaccard_matrix2 | tojson}};
       $('.ui-choose').ui_choose();
-      
       var orderDim = $('#orderDim').ui_choose();
       orderDim.click = function(value, item) {
           console.log('click', value);
@@ -224,11 +229,11 @@
       orderDim.change = function(value, item) {
           console.log('change', value);
       };
-      $('#parent').append('<div id="mapid" style="width: 500px; height: 400px;"></div>');
+      $('#parent').append('<div id="mapid" style="width: 650px; height: 550px;"></div>');
       d = new Date();
       loadImg2("/static/imgs/composite_img.png?" + d.getTime(), 2229, 2058);
-      
-      
+      $('#jaccardMatrix').html(convertJsonToTable(JSON.parse(jaccard_matrix)));
+      $('#jaccardMatrix2').html(convertJsonToTable(JSON.parse(jaccard_matrix2)));
 
       
    </script>
