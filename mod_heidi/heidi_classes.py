@@ -8,7 +8,7 @@ from flask import session
 
 import models
 from mod_heidiPreprocessing import assign_color
-from mod_heidi import jaccardMatrix
+from mod_heidiPreprocessing import jaccardMatrix
 from app import db
 import cv2
 
@@ -59,12 +59,12 @@ class HeidiMatrix:
         self.subspaceHeidi_map = {}
         self.subspaceList = '' #[(a,b,c), (a)] [tuple, tuple, ..]
         self.knn = 10
-        self.datasetname = ''
+        self.datasetName = ''
 
-    def initialize(self, dataset, datasetname):
+    def initialize(self, dataset, datasetName):
         self.dataset = dataset
         self.pointsOrder = list(dataset.index)
-        self.datasetname = datasetname
+        self.datasetName = datasetName
         self.subspaceList = []
         #self._setSubspaceHeidi_map()
     
@@ -93,8 +93,7 @@ class HeidiMatrix:
         subspaces=[]
         """
         for subspace in self.subspaceList:
-            print(subspace)
-            heidiMap = models.SubspaceHeidiMap.query.filter_by(subspace = str(subspace), dataset = self.datasetname).first()
+            heidiMap = models.SubspaceHeidiMap.query.filter_by(subspace = str(subspace), dataset = self.datasetName).first()
             self.subspaceHeidi_map[subspace] = cPickle.loads(heidiMap.heidiMatrix)
 
 
@@ -140,14 +139,14 @@ class HeidiImage:
         self.colorAssign = ''
         self.heidiImage = ''
         self.subspaceVector = []
-        self.datasetname = ''
+        self.datasetName = ''
         self.subspaceHeidiImage_map = {}
 
 
-    def initialize(self, dataset, datasetname):
+    def initialize(self, dataset, datasetName):
         self.dataset = dataset
-        self.datasetname = datasetname
-        #self.heidiMatrix_obj.initialize(self.dataset, self.datasetname)
+        self.datasetName = datasetName
+        #self.heidiMatrix_obj.initialize(self.dataset, self.datasetName)
         self.colorAssign = assign_color.ColorAssign()
 
     def setHeidiMatrix_obj(self, hobj):
@@ -180,23 +179,22 @@ class HeidiImage:
 
     def getHeidiImage(self):
         #TODO: write code to generate composite image  
-        composite_img = 0
+        compositeImg = 0
         mask_sum=0
         for subspace in self.subspaceVector[0:]:
-            print(subspace)
             heidi_matrix = self.heidiMatrix_obj.getHeidiMatrix_oneSubspace(subspace)
             mask = np.dstack((heidi_matrix, heidi_matrix, heidi_matrix))
             mask_sum +=mask
-            composite_img = composite_img + np.multiply(mask, self.subspaceHeidiImage_map[subspace])
+            compositeImg = compositeImg + np.multiply(mask, self.subspaceHeidiImage_map[subspace])
 
-        composite_img = composite_img / mask_sum
-        composite_img = composite_img.astype(np.uint8)
-        index_list = np.where(np.all(composite_img == [0,0,0], axis=-1))
-        composite_img[index_list]=[255,255,255]
-        composite_img = Image.fromarray(composite_img)
-        #composite_img.save('./imgs/composite_img.png')
-        composite_img.save('./static/imgs/composite_img.png')
-        return composite_img
+        compositeImg = compositeImg / mask_sum
+        compositeImg = compositeImg.astype(np.uint8)
+        index_list = np.where(np.all(compositeImg == [0,0,0], axis=-1))
+        compositeImg[index_list]=[255,255,255]
+        compositeImg = Image.fromarray(compositeImg)
+        #compositeImg.save('./imgs/compositeImg.png')
+        compositeImg.save('./static/imgs/compositeImg.png')
+        return compositeImg
         
     def getSubspaceHeidiImage_map(self):
         return self.subspaceHeidiImage_map
@@ -211,7 +209,7 @@ class HeidiImage:
         return
 
     def getHeidiImage_oneSubspace(self,subspace):
-        color = models.SubspaceColorMap.query.filter_by(dataset=self.datasetname, subspace=str(subspace))
+        color = models.SubspaceColorMap.query.filter_by(dataset=self.datasetName, subspace=str(subspace))
         color = assign_color.hex_to_rgb(color[0].color)
         heidi_matrix = self.heidiMatrix_obj.getHeidiMatrix_oneSubspace(subspace)
         arr = np.zeros((heidi_matrix.shape[0],heidi_matrix.shape[1],3))
@@ -227,14 +225,14 @@ class HeidiImage:
         #return img
 
 
-def saveHeidiMatrix_DB(subspaceHeidiMatrix_map, subspaceHeidiImage_map, datasetname):
+def saveHeidiMatrix_DB(subspaceHeidiMatrix_map, subspaceHeidiImage_map, datasetName):
     """
     INPUT
     ------
     subspaceHeidiMatrix_map : dictionary type
     {(d1,d2):[[0,1,.....1],.....[1,1,.......0]}
     """
-    existingDataset = models.SubspaceHeidiMap.query.filter_by(dataset=datasetname).all()
+    existingDataset = models.SubspaceHeidiMap.query.filter_by(dataset=datasetName).all()
     for data in existingDataset:
         db.session.delete(data)
     objects = []
@@ -247,14 +245,13 @@ def saveHeidiMatrix_DB(subspaceHeidiMatrix_map, subspaceHeidiImage_map, datasetn
             img = subspaceHeidiImage_map[key]
             img = Image.fromarray(img)
         serialized_image = cPickle.dumps(img)
-        obj = models.SubspaceHeidiMap(str(key), datasetname, serialized_matrix, serialized_image) # (subspace:tuple_string,datasetname:string, heidi_matrix (2-d numpy array), heidi_image)
+        obj = models.SubspaceHeidiMap(str(key), datasetName, serialized_matrix, serialized_image) # (subspace:tuple_string,datasetName:string, heidi_matrix (2-d numpy array), heidi_image)
         objects.append(obj)
     '''
     for key in subspaceHeidiImage_map:
-        print('kkkk',key)
         serialized_matrix = cPickle.dumps(subspaceHeidiMatrix_map[key])
         serialized_image = cPickle.dumps(subspaceHeidiImage_map[key])
-        obj = models.SubspaceHeidiMap(str(key), datasetname, serialized_matrix, serialized_image) # (subspace:tuple_string,datasetname:string, heidi_matrix (2-d numpy array), heidi_image)
+        obj = models.SubspaceHeidiMap(str(key), datasetName, serialized_matrix, serialized_image) # (subspace:tuple_string,datasetName:string, heidi_matrix (2-d numpy array), heidi_image)
         objects.append(obj)
     db.session.bulk_save_objects(objects)
     db.session.commit()
@@ -273,8 +270,8 @@ def getBlockId(x,y,cleaned_file):
         c=classLabel.count(i)
         class_count.append(c)
         class_label.append(i)
-    print('class_count', class_count)
-    print('classLabel', class_label)
+    #print('class_count', class_count)
+    #print('classLabel', class_label)
     c=0
     for i in range(len(class_count)):
         c = c + class_count[i]
@@ -347,19 +344,19 @@ matrix: similarity matrix (dataframe)
 """
 def getAllPatterns_block(rowBlock, colBlock, cleaned_file):
     tlx, tly, brx, bry = getBlockRange(rowBlock,colBlock, cleaned_file)
-    datasetname=session["filename"]
+    datasetName=session["filename"]
     colorMap = cPickle.loads(session["paramObj"]).filteredSubspaces_colormap
-    print(colorMap.keys(),'-----------hello----------------')
+    #print(colorMap.keys(),'-----------hello----------------')
     allSubspaces = list(colorMap.keys())
 
     heidiMatrix_obj = HeidiMatrix()
-    heidiMatrix_obj.initialize(cleaned_file, datasetname)
+    heidiMatrix_obj.initialize(cleaned_file, datasetName)
     heidiMatrix_obj.setSubspaceList(allSubspaces)
     heidiMatrix_obj.setSubspaceHeidi_map_db()
     subspaceHeidiMatrix_map = heidiMatrix_obj.getSubspaceHeidi_map()
     
     heidiImage_obj = HeidiImage()
-    heidiImage_obj.initialize(cleaned_file, datasetname)
+    heidiImage_obj.initialize(cleaned_file, datasetName)
     heidiImage_obj.setHeidiMatrix_obj(heidiMatrix_obj)
     heidiImage_obj.setSubspaceVector(allSubspaces)
     #print('allsubspaces',allSubspaces)
@@ -373,7 +370,7 @@ def getAllPatterns_block(rowBlock, colBlock, cleaned_file):
         colors = img.convert('RGB').getcolors()
         rowPoints,colPoints,pointsPair = getPatternPoints(img,rowBlock,colBlock, cleaned_file,colors[1][1])
         patterns_df.loc[i] = [str(colors[1][1]), str(subspace), rowPoints, colPoints, pointsPair]
-        img.save('static/output/temp'+str(i)+'.png')    
+        #img.save('static/output/temp'+str(i)+'.png')    
         i=i+1
     return patterns_df
     #mat = jaccardMatrix.getJaccardMatrix(patterns_df)

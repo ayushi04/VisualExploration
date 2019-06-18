@@ -56,7 +56,7 @@ def closest_node_origin(allData):
     row,col=allData.shape
     dist = np.sqrt(np.sum((allData.iloc[:,:])**2, axis=1))
     index=np.argmin(dist)
-    print(index)
+    #print(index)
     return index
 
 #HELPER METHOD FOR getConnectedDistance AND mst ORDERING

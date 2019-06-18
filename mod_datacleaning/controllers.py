@@ -97,10 +97,10 @@ def upload():
         #paramObj = heidi_api.getAllSubspaces(cleaned_file, filename)
 
         #return render_template('success.html', download_path=download_path, user=current_user)
-        #return render_template('dimension_new.html', title = 'visual tool', user = current_user, paramObj = paramObj) #title='dimension Visualization',datasetPath=datasetPath,user=current_user, dimensions=['a','b','c'])
+        #return render_template('dimension_new.html', title = 'visual tool', user = current_user, paramObj = paramObj) #title='dimension Visualization',datasetName=datasetName,user=current_user, dimensions=['a','b','c'])
         return redirect(url_for('heidi_controllers.interactive_heidi'))
         #return redirect(url_for('heidi_controllers.heidi', title='visual tool', user = current_user, paramObj = paramObj))
-        #render_template('first.html',title='visual tool',datasetPath=download_path, user=current_user)
+        #render_template('first.html',title='visual tool',datasetName=download_path, user=current_user)
     #except Exception as e:
     #    print(e)
     #    PrintException()

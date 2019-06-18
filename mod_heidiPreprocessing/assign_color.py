@@ -25,7 +25,7 @@ class ColorAssign:
 		return self.colormap
 
 
-def saveColormap_DB(color_map, datasetname):
+def saveColormap_DB(color_map, datasetName):
 	"""
 	INPUT
 	------
@@ -33,14 +33,14 @@ def saveColormap_DB(color_map, datasetname):
 	e.g., 
 	{(d1,d2):#ffff12, (d1):#ff12ff, (d2):#1234ff}
 	"""
-	existingDataset = models.SubspaceColorMap.query.filter_by(dataset=datasetname).all()
+	existingDataset = models.SubspaceColorMap.query.filter_by(dataset=datasetName).all()
 	for data in existingDataset:
 		db.session.delete(data)
 	objects = []
 	for key in color_map:
-		obj = models.SubspaceColorMap(datasetname, color_map[key], str(key)) #(datasetname, color, str(subspace))
+		obj = models.SubspaceColorMap(datasetName, color_map[key], str(key)) #(datasetName, color, str(subspace))
 		objects.append(obj)
-	print(objects)
+	#print(objects)
 	db.session.bulk_save_objects(objects)
 	db.session.commit()
 
@@ -49,12 +49,12 @@ def hex_to_rgb(hexColor):
 	rgb = tuple([color_val.red, color_val.green, color_val.blue])
 	return rgb
 
-def getColormap_DB(datasetname, colorList = None):
+def getColormap_DB(datasetName, colorList = None):
 	"""
 	INPUT
 	-----
 	colorList = ['#f04a1c', '#60385a', '#3e5617']
-	datasetname = "iris.csv"
+	datasetName = "iris.csv"
 
 	OUTPUT
 	------
@@ -65,14 +65,14 @@ def getColormap_DB(datasetname, colorList = None):
 	colorMap = {}
 
 	if(colorList is None):
-		objects = models.SubspaceColorMap.query.filter_by(dataset=datasetname).all()
+		objects = models.SubspaceColorMap.query.filter_by(dataset=datasetName).all()
 		for obj in objects:
 			subspace = tuple(obj.subspace[1:-1].split(','))
 			colorMap[subspace] = obj.color
 		return colorMap
 	#IF COLORLIST IS NOT NONE
 	for color in colorList:
-		obj = models.SubspaceColorMap.query.filter_by(dataset=datasetname, color=color).first()
+		obj = models.SubspaceColorMap.query.filter_by(dataset=datasetName, color=color).first()
 		subspace = make_tuple(obj.subspace)
 		colorMap[subspace] = color
 	return colorMap

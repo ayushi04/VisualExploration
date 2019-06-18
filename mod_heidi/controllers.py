@@ -16,7 +16,7 @@ from mod_heidi import heidi_api
 from mod_heidi import heidi_classes
 from mod_heidiPreprocessing import assign_color
 from mod_heidiPreprocessing.subspace_search_heidi import SubspaceSearch_Heidi
-from mod_heidi import jaccardMatrix
+from mod_heidiPreprocessing import jaccardMatrix
 
 
 mod_heidi_controllers = Blueprint('heidi_controllers', __name__)
@@ -45,8 +45,8 @@ def interactive_heidi():
     sobj = SubspaceSearch_Heidi()
     sobj.initialize(class_count, subspaceHeidiMatrix_map)
     filtered_subspaces = sobj.getTopAInterestingSubspace(15)
-    print('-------------------------------------------------')
-    print(filtered_subspaces)
+    #print('-------------------------------------------------')
+    #print(filtered_subspaces)
     #filtered_subspaces = list(subspaceHeidiMatrix_map.keys())
     paramObj = heidi_api.image_map(cleaned_file, filename, heidiMatrix_obj, filtered_subspaces)
     session['paramObj'] = cPickle.dumps(paramObj)
@@ -69,8 +69,8 @@ def heidi():
     colorList = request.form.getlist('color[]')
     orderDim = request.form.getlist('orderDim')
     otherDim = request.form.getlist('otherDim')
-    datasetname = session['filename']
-    obj = models.Dataset.query.filter_by(name=datasetname).first()
+    datasetName = session['filename']
+    obj = models.Dataset.query.filter_by(name=datasetName).first()
     cleaned_file = cPickle.loads(obj.content)
     del cleaned_file['classLabel']
     cleaned_file.index = cleaned_file['id']
@@ -84,14 +84,14 @@ def heidi():
     #REORDER THE POINTS IN IMAGE (CAN DO LATER)
 
     #CREATE THE COMBINED IMAGE FOR SELECTED SUBSPACES.
-    compositeImg = heidi_api.getSelectedSubspaces(datasetname,colorList)
+    compositeImg = heidi_api.getSelectedSubspaces(datasetName,colorList)
     #session['compositeImg'] =cPickle.dumps(compositeImg)
     session['selectedColors'] = colorList 
     jaccard_matrix = cPickle.loads(session['jaccard_matrix'])
     jaccard_matrix2 = cPickle.loads(session['jaccard_matrix2'])
     return render_template('dimension_new.html', title = 'visual tool', \
                             user = current_user, paramObj = paramObj, \
-                            image = 'imgs/composite_img.png', \
+                            image = 'imgs/compositeImg.png', \
                             jaccard_matrix = jaccard_matrix.reset_index().to_json(orient='records'), \
                             jaccard_matrix2 = jaccard_matrix2.reset_index().to_json(orient='records') \
                             )
@@ -104,8 +104,8 @@ def heidi():
     #title=request.args.get('title')
     #user = request.args.get('user')
     #paramObj = jsonrequest.data.get('paramObj').to_dict()
-    #print(paramObj['datasetPath'],'heidi_controllers')
-    #return render_template('dimension_new.html', paramObj = paramObj) #title='dimension Visualization',datasetPath=datasetPath,user=current_user, dimensions=['a','b','c'])
+    #print(paramObj['datasetName'],'heidi_controllers')
+    #return render_template('dimension_new.html', paramObj = paramObj) #title='dimension Visualization',datasetName=datasetName,user=current_user, dimensions=['a','b','c'])
 
 
 #IF USER CLICKS ON A PIXEL IN IMAGE, THIS METHOD IS CALLED
@@ -119,7 +119,7 @@ def highlightPattern():
     #gridPatterns=request.args.get('gridPatterns')
     #print('grid',grid)
     #imgType = '_'+request.args.get('imgType')
-    datasetPath = 'static/output'
+    datasetName = 'static/output'
     datasetName = session['filename']
     obj = models.Dataset.query.filter_by(name=datasetName).first()
     cleaned_file = cPickle.loads(obj.content)

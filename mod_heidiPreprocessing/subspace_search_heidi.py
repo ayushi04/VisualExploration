@@ -29,7 +29,7 @@ class SubspaceSearch_Heidi:
 				for i in range(prev,prev+curr):
 					for j in range(prev,prev+curr):
 						self.subspaceHeidi_map[subspace][i][j]=0
-				prev=curr
+				prev=curr+prev
 	
 	"""
 	This method sorts all interesting subspaces identified using denseness of patterns
@@ -46,8 +46,8 @@ class SubspaceSearch_Heidi:
 		self.freq_subspace = {} #frequency of all subspaces {tuple:integer}
 		for subspace in self.subspaceHeidi_map:
 			self.freq_subspace[subspace] = np.count_nonzero(self.subspaceHeidi_map[subspace])
-		for k,v in sorted(self.freq_subspace.items(), key=operator.itemgetter(1), reverse=True):
-			print(k,v)
+		#for k,v in sorted(self.freq_subspace.items(), key=operator.itemgetter(1), reverse=True):
+		#	print(k,v)
 
 	def getTopAInterestingSubspace(self, A):
 		#TODO: write code to return top A interesting subspaces

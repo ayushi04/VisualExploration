@@ -36,7 +36,7 @@ function loadImg2(url, w, h) {
           data: {
             x: x,
             y:y,
-            //datasetPath:getParameterByName('datasetPath'),
+            //datasetName:getParameterByName('datasetName'),
             id:''
             //grid:grid
           },
