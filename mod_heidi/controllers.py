@@ -10,11 +10,12 @@ import _pickle as cPickle
 import models
 import math
 from PIL import Image
+import copy
 
 from mod_datacleaning import data_cleaning
 from mod_heidi import heidi_api
 from mod_heidi import heidi_classes
-from mod_heidiPreprocessing import assign_color
+from mod_heidiPreprocessing import assign_color, orderAPI
 from mod_heidiPreprocessing.subspace_search_heidi import SubspaceSearch_Heidi
 from mod_heidiPreprocessing import jaccardMatrix
 
@@ -29,7 +30,7 @@ def interactive_heidi():
     del cleaned_file['classLabel']
     cleaned_file.index = cleaned_file['id']
     del cleaned_file['id']
-    #print(cleaned_file)
+    
     heidiMatrix_obj = heidi_api.matrix_map(cleaned_file,filename)
     subspaceHeidiMatrix_map = heidiMatrix_obj.getSubspaceHeidi_map()
 
@@ -43,20 +44,32 @@ def interactive_heidi():
         class_label.append(i)
     #print('class_count', class_count)
     sobj = SubspaceSearch_Heidi()
-    sobj.initialize(class_count, subspaceHeidiMatrix_map)
+    sobj.initialize(class_count, copy.deepcopy(subspaceHeidiMatrix_map))
     filtered_subspaces = sobj.getTopAInterestingSubspace(15)
+    orderAPI.saveOrder_toDB(filename, cPickle.loads(obj.content), filtered_subspaces)
     #print('-------------------------------------------------')
     #print(filtered_subspaces)
     #filtered_subspaces = list(subspaceHeidiMatrix_map.keys())
+    #new_heidiMatrix_obj = heidiMatrix_obj
+
+    #ordered_matrixmap = orderAPI.orderMatrixMap_composite(new_heidiMatrix_obj.getSubspaceHeidi_map(), filename)
+    #new_heidiMatrix_obj.updateSubspaceHeidi_map(ordered_matrixmap)    
     paramObj = heidi_api.image_map(cleaned_file, filename, heidiMatrix_obj, filtered_subspaces)
-    session['paramObj'] = cPickle.dumps(paramObj)
+    #session['p'] = cPickle.dumps(paramObj)
+
     jaccard_matrix = ''
-    patterns_df = heidi_classes.getAllPatterns_block( 0, 1,cPickle.loads(obj.content))
+    patterns_df = heidi_classes.getAllPatterns_block( 0, 1,cPickle.loads(obj.content), paramObj)
     jaccard_matrix = jaccardMatrix.getJaccardMatrix(patterns_df)
     jaccard_matrix2 = jaccardMatrix.getJaccardMatrix2(patterns_df)
-    session['paramObj'] = cPickle.dumps(paramObj)
-    session['jaccard_matrix'] = cPickle.dumps(jaccard_matrix)
-    session['jaccard_matrix2'] = cPickle.dumps(jaccard_matrix2)
+    #session['paramObj'] = cPickle.dumps(paramObj)
+    existingDataset = models.sessionvars.query.filter_by(dataset=filename).all()
+    for data in existingDataset:
+        db.session.delete(data)
+    obj = models.sessionvars(filename, cPickle.dumps(paramObj), cPickle.dumps(jaccard_matrix), cPickle.dumps(jaccard_matrix2))
+    db.session.add(obj)
+    db.session.commit()
+    #session['jaccard_matrix'] = cPickle.dumps(jaccard_matrix)
+    #session['jaccard_matrix2'] = cPickle.dumps(jaccard_matrix2)
     return render_template('dimension_new.html', title = 'visual tool', user = current_user, \
                                 paramObj = paramObj, \
                                 jaccard_matrix = jaccard_matrix.reset_index().to_json(orient='records'), \
@@ -72,11 +85,18 @@ def heidi():
     datasetName = session['filename']
     obj = models.Dataset.query.filter_by(name=datasetName).first()
     cleaned_file = cPickle.loads(obj.content)
+    print(orderDim)
+    """
+    if(len(orderDim)>0):
+        sorted_data_index = orderAPI.order(cleaned_file, orderDim, orderMeasure='knn_bfs') 
+        sorted_data_index = list(sorted_data.index)
+    """    
+
     del cleaned_file['classLabel']
     cleaned_file.index = cleaned_file['id']
     del cleaned_file['id']
-    paramObj = cPickle.loads(session['paramObj'])
-
+    paramObj = cPickle.loads(models.sessionvars.query.filter_by(dataset=datasetName).first().paramObj)
+    
     #CODE TO ORDER POINTS BASED ON ORDER DIM (CAN DO LATER)
 
     #GET HEIDI IMAGE FROM DATABASE
@@ -84,11 +104,14 @@ def heidi():
     #REORDER THE POINTS IN IMAGE (CAN DO LATER)
 
     #CREATE THE COMBINED IMAGE FOR SELECTED SUBSPACES.
-    compositeImg = heidi_api.getSelectedSubspaces(datasetName,colorList)
+    compositeImg = heidi_api.getSelectedSubspaces(datasetName,colorList, orderDim)
     #session['compositeImg'] =cPickle.dumps(compositeImg)
-    session['selectedColors'] = colorList 
-    jaccard_matrix = cPickle.loads(session['jaccard_matrix'])
-    jaccard_matrix2 = cPickle.loads(session['jaccard_matrix2'])
+    patterns_df = heidi_classes.getAllPatterns_block( 0, 1,cPickle.loads(obj.content), paramObj, orderDim)
+    session['selectedColors'] = colorList
+    obj = models.sessionvars.query.filter_by(dataset=datasetName).first() 
+
+    jaccard_matrix = cPickle.loads(obj.jaccardMatrix)
+    jaccard_matrix2 = cPickle.loads(obj.jaccardMatrix2)
     return render_template('dimension_new.html', title = 'visual tool', \
                             user = current_user, paramObj = paramObj, \
                             image = 'imgs/compositeImg.png', \
@@ -150,7 +173,8 @@ def highlightPattern():
     t=t.append(colPoints_df)
     t.to_csv('static/output/rowColPoints.csv');
     return json.dumps({'rowPoints':rowPoints_df.to_json(orient='records'),'colPoints':colPoints_df.to_json(orient='records')})
-    
+ 
+"""   
 @mod_heidi_controllers.route('/jaccardMatrix')
 def jaccardMatrix_Controller():    
     datasetName = session['filename']
@@ -158,4 +182,4 @@ def jaccardMatrix_Controller():
     cleaned_file = cPickle.loads(obj.content)
     jaccard_matrix = heidi_classes.getAllPatterns_block( 0, 1, cleaned_file)
     return json.dumps({'jaccard_matrix':jaccard_matrix.reset_index().to_json(orient='records')})
-    
+""" 

@@ -26,6 +26,7 @@ class SubspaceSearch_Heidi:
 		for subspace in self.subspaceHeidi_map:
 			prev=0
 			for curr in self.classDistribution:
+				#print(prev)
 				for i in range(prev,prev+curr):
 					for j in range(prev,prev+curr):
 						self.subspaceHeidi_map[subspace][i][j]=0

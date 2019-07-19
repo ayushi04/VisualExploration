@@ -8,7 +8,7 @@ from flask import session
 
 import models
 from mod_heidiPreprocessing import assign_color
-from mod_heidiPreprocessing import jaccardMatrix
+from mod_heidiPreprocessing import jaccardMatrix, orderAPI
 from app import db
 import cv2
 
@@ -58,7 +58,7 @@ class HeidiMatrix:
         self.pointsOrder = []
         self.subspaceHeidi_map = {}
         self.subspaceList = '' #[(a,b,c), (a)] [tuple, tuple, ..]
-        self.knn = 10
+        self.knn = 20
         self.datasetName = ''
 
     def initialize(self, dataset, datasetName):
@@ -102,6 +102,9 @@ class HeidiMatrix:
     """
     def reorderHeidiMatrix(self, newPointsOrder):
         pass        
+
+    def updateSubspaceHeidi_map(self, updatedMap):
+        self.subspaceHeidi_map = updatedMap
 
     def setSubspaceHeidi_map(self):
         """
@@ -342,10 +345,18 @@ OUTPUT
 matrix: similarity matrix (dataframe)
 
 """
-def getAllPatterns_block(rowBlock, colBlock, cleaned_file):
+def getAllPatterns_block(rowBlock, colBlock, cleaned_file, paramObj,orderDims=None):
     tlx, tly, brx, bry = getBlockRange(rowBlock,colBlock, cleaned_file)
     datasetName=session["filename"]
-    colorMap = cPickle.loads(session["paramObj"]).filteredSubspaces_colormap
+    colorMap = paramObj.filteredSubspaces_colormap
+    '''
+    for k in colormap:
+        print('subspace: ', k, 'color: ', colormap[k])
+        img = 
+        cropped_img = compositeImg.crop((tlx, tly, brx, bry))
+        cropped_img.save('./static/imgs/cropped_img.png')
+        pix = compositeImg.load()
+    '''
     #print(colorMap.keys(),'-----------hello----------------')
     allSubspaces = list(colorMap.keys())
 
@@ -354,7 +365,10 @@ def getAllPatterns_block(rowBlock, colBlock, cleaned_file):
     heidiMatrix_obj.setSubspaceList(allSubspaces)
     heidiMatrix_obj.setSubspaceHeidi_map_db()
     subspaceHeidiMatrix_map = heidiMatrix_obj.getSubspaceHeidi_map()
-    
+    if(orderDims is not None):
+        print('orderDims:', orderDims)
+        ordered_matrixmap = orderAPI.orderSubspaceMatrixMap(subspaceHeidiMatrix_map, datasetName, tuple(orderDims))
+        heidiMatrix_obj.updateSubspaceHeidi_map(ordered_matrixmap)   
     heidiImage_obj = HeidiImage()
     heidiImage_obj.initialize(cleaned_file, datasetName)
     heidiImage_obj.setHeidiMatrix_obj(heidiMatrix_obj)
@@ -370,7 +384,8 @@ def getAllPatterns_block(rowBlock, colBlock, cleaned_file):
         colors = img.convert('RGB').getcolors()
         rowPoints,colPoints,pointsPair = getPatternPoints(img,rowBlock,colBlock, cleaned_file,colors[1][1])
         patterns_df.loc[i] = [str(colors[1][1]), str(subspace), rowPoints, colPoints, pointsPair]
-        #img.save('static/output/temp'+str(i)+'.png')    
+        print('------:',subspace, len(pointsPair))
+        img.crop((tlx, tly, brx, bry)).save('static/output/car'+str(subspace)+'.png')    
         i=i+1
     return patterns_df
     #mat = jaccardMatrix.getJaccardMatrix(patterns_df)

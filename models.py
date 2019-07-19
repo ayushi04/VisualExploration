@@ -88,8 +88,33 @@ class SubspaceHeidiMap(db.Model, UserMixin):
     def __repr__(self):
         return "< SubspaceHeidiMap %s %s %s >" %(self.subspace, self.dataset, self.heidiMatrix)
 
+class sessionvars(db.Model, UserMixin):
+    __tablename__='sessionvars'
+    id = db.Column(db.Integer, primary_key=True, autoincrement = True)
+    dataset = db.Column(db.String(50), nullable = False)
+    paramObj = db.Column(db.String(50000), nullable = False)
+    jaccardMatrix = db.Column(db.String(50000), nullable = False)
+    jaccardMatrix2 = db.Column(db.String(50000), nullable = False)
+    
+    def __init__(self, dataset, paramObj, jaccardMatrix, jaccardMatrix2):
+        self.dataset = dataset
+        self.paramObj = paramObj
+        self.jaccardMatrix = jaccardMatrix
+        self.jaccardMatrix2 = jaccardMatrix2
 
-
+class PointOrder(db.Model, UserMixin):
+    __tablename__='pointsorder1'
+    id = db.Column(db.Integer, primary_key=True, autoincrement = True)
+    dataset = db.Column(db.String(50), nullable = False)
+    subspace = db.Column(db.String(50), nullable = False)
+    orderMeasure = db.Column(db.String(50), nullable = False)
+    sorted_order = db.Column(db.BLOB(), nullable = False)
+    
+    def __init__(self,filename, subspace, orderMeasure, sorted_order):
+        self.dataset = filename
+        self.subspace = subspace
+        self.orderMeasure = orderMeasure
+        self.sorted_order = sorted_order
 
 """
 This table stores the image and the continious regions in the image

@@ -261,7 +261,7 @@ def orderPoints_eucld(feature_vector):
 
 def sortbasedOnclassLabel(feature_vector,ordermeasure,param={}):
     centroids={}
-    #print(ordermeasure)
+    print(ordermeasure)
     for k in set(feature_vector.classLabel):
         x=feature_vector[feature_vector.classLabel==k].mean()
         x=x[0:-2]
@@ -310,15 +310,17 @@ def sortbasedOnclassLabel(feature_vector,ordermeasure,param={}):
 if __name__=="__main__":
 
     #feature_vector,classLabel_numeric,class_label_dict,fv_dict, row, col=readDataset('./static/default/blobs_4d_5c_1000/blobs_4d_5c_1000.csv','yes')
-    feature_vector=pd.read_csv('/home/ayushi/Ayushi/github/visualization_projects/1-add-dim/static/dataset/usda-clean-less-classLabel.csv')
+    #feature_vector=pd.read_csv('/home/ayushi/Ayushi/github/visualization_projects/1-add-dim/static/dataset/usda-clean-less-classLabel.csv')
+    feature_vector = pd.read_csv('../static/uploads/synth_5d_500p.csv', index_col='id')
     #feature_vector.loc[:,'classLabel']=classLabel_numeric
     feature_vector.loc[:,'classLabel_orig']=feature_vector.loc[:,'classLabel']
-    del feature_vector['id']
+    #del feature_vector['id']
     #feature_vector=feature_vector.iloc[0:10,:]
     #print(feature_vector.iloc[:,:-2])
     #print(getKnnMatrix(feature_vector,4))
-    sortbasedOnclassLabel(feature_vector,'knn_bfs')
-
+    sorted_data = sortbasedOnclassLabel(feature_vector,'knn_bfs')
+    print(feature_vector)
+    print(sorted_data)
     #param={}    
     #sorted_data=sortbasedOnclassLabel(feature_vector,'euclidian_distance',param)
     #print(sorted_data.index)

@@ -65,7 +65,8 @@ def upload():
             cleaned_file.to_json(file_uploads_path)
         else:
             raise ValueError('Invalid file input! Please check the input file type')
-
+        #cleaned_file =cleaned_file.sort_values(by=['classLabel'])
+        #cleaned_file.to_csv('static/test2.csv')
         download_path = 'static/uploads/' + filename
         session['filename'] = filename
 
@@ -76,7 +77,7 @@ def upload():
         
         #SAVING INPUT DATASET TO DATABASE
         try:
-
+            #print(cleaned_file)
             serialized_content = cPickle.dumps(cleaned_file) 
             #session['cleaned_file'] = serialized_content
             existingDataset = Dataset.query.filter_by(name=filename).all()
